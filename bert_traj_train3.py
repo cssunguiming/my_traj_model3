@@ -154,7 +154,7 @@ def run(epoch, model, optimizer, device, train_data, train_traj_id, valid_data, 
         
     for epoch_i in range(1, epoch+1):
         
-        train_queue = generate_queue(train_traj_id,'normal','train')
+        train_queue = generate_queue(train_traj_id,'random','train')
         valid_queue = generate_queue(valid_traj_id,'normal','valid') 
 
         train_avg_loss = predict_train_epoch(epoch_i, model, train_data, train_queue, optimizer, device, batch_size)
