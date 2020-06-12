@@ -160,7 +160,7 @@ def run(epoch, model, optimizer, device, train_data, train_traj_id, valid_data, 
         train_avg_loss = predict_train_epoch(epoch_i, model, train_data, train_queue, optimizer, device, batch_size)
         valid_avg_loss, valid_acc, valid_metric = predict_valid_epoch(epoch_i, model, valid_data, valid_queue, optimizer, device, batch_size)
         print('-'*150)
-        print(" --Train--  Epoch: {}/{}  Train_avg_loss: {:<10.7f} ".format(epoch_i, epoch, train_avg_los))
+        print(" --Train--  Epoch: {}/{}  Train_avg_loss: {:<10.7f} ".format(epoch_i, epoch, train_avg_loss))
         print(" --Valid--  Epoch: {}/{}  Valid_avg_loss: {:<10.7f} Valid_acc: {:<4.4f}".format(epoch_i, epoch, valid_avg_loss, valid_acc))
         print('-'*150)
         # print(" --Train--  Epoch: {}/{}  Metric: {:<4.4f} \ {:<4.4f} \ {:<4.4f} \ {:<4.4f} \ {:<4.4f} \ {:<4.4f}".format(epoch_i, epoch, train_metric[0][0], train_metric[1][0], train_metric[2][0], train_metric[3][0], train_metric[4][0], train_metric[5][0]))
@@ -171,7 +171,7 @@ def run(epoch, model, optimizer, device, train_data, train_traj_id, valid_data, 
         
         if log_train_file and log_valid_file:
             with open(log_train_file, 'a') as log_tf, open(log_valid_file, 'a') as log_vf:
-                log_tf.write(" --Train--  Epoch: {}/{}  Train_avg_loss: {} Train_acc: {}\n".format(epoch_i, epoch, train_avg_loss, train_acc))
+                log_tf.write(" --Train--  Epoch: {}/{}  Train_avg_loss: {} \n".format(epoch_i, epoch, train_avg_loss))
                 log_vf.write(" --Valid--  Epoch: {}/{}  Valid_avg_loss: {} Valid_acc: {}\n".format(epoch_i, epoch, valid_avg_loss, valid_acc)) 
         
         # if epoch_i % 2==0:
