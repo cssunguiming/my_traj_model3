@@ -51,7 +51,7 @@ class Predict_Model(nn.Module):
 
     def forward(self, x, input_time, max_len, pos=None, neg=None):
 
-        neg = pos+1
+#         neg = pos+1
         is_target = pos.ne(0)
         # print("target", is_target)
 
