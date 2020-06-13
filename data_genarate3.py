@@ -26,8 +26,27 @@ def before_pad_tensor(vec, pad, dim):
 
     return torch.cat([torch.zeros(*pad_size, dtype=torch.long), vec], dim=dim)
 
+def neg_samp_pad_tensor(vec, pad, dim):
 
-def generate_input_history(data_neural, mode, freqs, candidate=None):
+    # print("vec\n", vec)
+    # print("vec", vec.size())
+    # print(vec.shape)
+    # print(pad)
+    pad_size = list(vec.shape)
+    # print("pad_size 1", pad_size)
+    pad_size[dim] = pad - vec.size(dim)
+
+    # print("pad_size 2", pad_size)
+    # # print("pad_size dim",pad_size[dim])
+    # print(vec)
+
+    # print(torch.cat([vec, torch.zeros(*pad_size, dtype=torch.long)], dim=dim))
+    # exit()
+
+    return torch.cat([vec, torch.zeros(*pad_size, dtype=torch.long)], dim=dim)
+
+
+def generate_input_history(data_neural, mode, freqs, N=5, candidate=None):
     # train_data, train_traj_idx = generate_input_history(data_neural=dataset_4qs["data_neural"], mode="train")
     data_train = {}
     train_idx = {}
@@ -84,11 +103,13 @@ def generate_input_history(data_neural, mode, freqs, candidate=None):
             trace['target_loc'] = Variable(torch.LongTensor(target))
             trace['target_tim'] = Variable(torch.LongTensor(target_time))
             trace['his_len_traj'] = Variable(torch.LongTensor(his_len_traj))
-            trace['neg_samp'] = torch.multinomial(torch.from_numpy(freqs), len(target), True)
-            if sum(trace['neg_samp'] == trace['target_loc']) > 0 :
-                for k in range(len(target)):
-                    while((trace['neg_samp'][k] in trace['target_loc'])):
-                        trace['neg_samp'][k] = torch.multinomial(torch.from_numpy(freqs), 1, True)
+            trace['neg_samp'] = torch.multinomial(torch.from_numpy(freqs), N*len(target), True).contiguous().view(-1, N)
+            
+                # if sum(trace['neg_samp'][m] == trace['target_loc']) > 0 :
+            for m in range(len(target)):
+                for k in range(N):
+                    while((trace['neg_samp'][m][k] in trace['target_loc'])):
+                        trace['neg_samp'][m][k] = torch.multinomial(torch.from_numpy(freqs), 1, True)
 
             data_train[u][i] = trace
         train_idx[u] = sessions_ids

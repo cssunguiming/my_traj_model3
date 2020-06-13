@@ -51,42 +51,71 @@ class Predict_Model(nn.Module):
 
     def forward(self, x, input_time, max_len, pos=None, neg=None):
 
-        neg = pos+1
         is_target = pos.ne(0)
-        # print("target", is_target)
 
         x = self.bert(x, input_time, max_len)
-
         x = x[:,max_len:]
-        # print("x size", x.size())
-        # print("exit in preddict")
-        # eixt()
 
         # logit: [batch_size, seq_size, d_]
+        # print("neg", neg.size())
 
-        pos_emb = self.place_outemb(pos)
+        pos_emb = self.place_outemb(pos).unsqueeze(-2)
         neg_emb = self.place_outemb(neg)
 
-        # print("pos", pos_emb.size())
-        # print("neg", neg_emb.size())
+        # print("pos", pos_emb.size(), "* x[:,:,:-10]", x[:,:,:-10].size())
+        # print("neg", neg_emb.size(), "* x[:,:,:-10].unsqueeze(2) ", x[:,:,:-10].unsqueeze(2).size())
+        # print("x[:,:,:-10]",x[:,:,:-10].size())
+        
+# #////////////////////////////////////////////////////
+        # pos_logits = torch.sum(pos_emb * x[:,:,:-10].unsqueeze(2), -1)
+        # neg_logits = torch.sum(neg_emb * x[:,:,:-10].unsqueeze(2), -1)
+        # # print(neg_logits)
+        # print("pos", pos_logits.size())
+        # print("neg", neg_logits.size())
 
-        pos_logits = torch.sum(pos_emb * x[:,:,:-10], -1)
-        neg_logits = torch.sum(neg_emb * x[:,:,:-10], -1)
-        # print("pos",pos_logits.size())
+        # loss_pos = torch.sum(- torch.log(torch.sigmoid(pos_logits) + 1e-24) * is_target.unsqueeze(-1)) 
+        # loss_neg = torch.sum( - torch.log(1 - torch.sigmoid(neg_logits) + 1e-24) * is_target.unsqueeze(-1))
+        # # ) / torch.sum(is_target)
+        # loss_neg2 = torch.sum( - torch.log( torch.sigmoid(-neg_logits) + 1e-24) * is_target.unsqueeze(-1))
+        # loss = loss_pos + loss_neg
 
-        loss = torch.sum(
-            - torch.log(torch.sigmoid(pos_logits) + 1e-24) * is_target -
-            torch.log(1 - torch.sigmoid(neg_logits) + 1e-24) * is_target
-        ) / torch.sum(is_target)
-        # print("loss", loss)
+        # print("loss1, loss_pos, loss_neg", loss.item(), loss_pos.item(), loss_neg.item())
+        # print("loss_neg2", loss_neg2)
+# #////////////////////////////////////////////////////////////
 
         # print("exit in predict model forward")
         # exit()
 
-        # logit2 = self.time_Linear(x[:,:,-10:])
-        
+        # [batch_size, seq_size, embed_size]      x
+        # [batch_size, seq_Size, embed_size]      pos
+        # [batch_size, K, seq_size, embed_size]   neg
+
+        #向量乘法
+        x = x[:,:,:-10].unsqueeze(-1) # [batch_size, embed_size, 1],新增一个维度用于向量乘法
+        # print("")
+
+        # pos_emb = pos_emb.unsqueeze(-2)
+
+        # print("x", x.size())
+        # print("pos", pos_emb.size())
+        # print("neg", neg_emb.size())
+        # print(torch.matmul(pos_emb, x).squeeze().size())
+        # exit()
+        pos_dot = torch.matmul(pos_emb, x).squeeze() # [batch_size, seq_size ]z只保留前两维
+        neg_dot = torch.matmul(neg_emb, x).squeeze() # [batch_size, K, seq_size)]z只保留前两维
+
+
+        pos_dot = pos_dot * is_target
+        neg_dot = neg_dot * is_target.unsqueeze(-1)
+
+
+        log_pos = F.logsigmoid(pos_dot).sum() #按照公式计算
+        log_neg = F.logsigmoid(-neg_dot).sum()
+
+        loss = -(log_pos + log_neg) 
+          
         return loss
-        # return loss, logit2.contiguous().view(-1, logit2.size(-1))
+
     
     def predict(self, x, input_time, max_len, pos=None, neg=None):
         # forward(self, x, input_time, max_len, pos=None, neg=None):

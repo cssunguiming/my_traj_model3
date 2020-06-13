@@ -6,7 +6,7 @@ import numpy as np
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 # from data_generate import Predict_Traj_Dataset, generate_input, generate_input2
-from data_genarate3 import generate_input_history, generate_queue, pad_tensor, before_pad_tensor, get_freqs
+from data_genarate3 import generate_input_history, generate_queue, pad_tensor, before_pad_tensor, get_freqs, neg_samp_pad_tensor
 from bert_language_model import Predict_Model
 from bert_traj_model import Bert_Traj_Model
 from optimizer import Trans_Optim
@@ -48,9 +48,16 @@ def predict_train_epoch(epoch, model, train_data, train_queue, optimizer, device
         time = torch.cat([pad_tensor(train_data[u][idx]['tim'],max_place,0).unsqueeze(0) for u, idx in batch_queue], dim=0).to(device).long()
         # loc_label = torch.cat([pad_tensor(train_data[u][idx]['target_loc'],max_place,0).unsqueeze(0) for u, idx in batch_queue], dim=0).to(device).long().contiguous().view(-1)
         loc_label = torch.cat([pad_tensor(train_data[u][idx]['target_loc'],max_place,0).unsqueeze(0) for u, idx in batch_queue], dim=0).to(device).long()
-        neg_label = torch.cat([pad_tensor(train_data[u][idx]['neg_samp'],max_place,0).unsqueeze(0) for u, idx in batch_queue], dim=0).to(device).long()
+        # print([neg_samp_pad_tensor(train_data[u][idx]['neg_samp'],max_place,1).unsqueeze(0) for u, idx in batch_queue])
+        neg_label = torch.cat([neg_samp_pad_tensor(train_data[u][idx]['neg_samp'],max_place,0).unsqueeze(0) for u, idx in batch_queue], dim=0).to(device).long()
         time_label = torch.cat([pad_tensor(train_data[u][idx]['target_tim'],max_place,0).unsqueeze(0) for u, idx in batch_queue], dim=0).to(device).long().contiguous().view(-1)
-        
+
+        # print(neg_label)
+        # print("neg label\n",neg_label.size())
+        # print("exit in predict train epoch")
+        # exit()
+
+
         history_loc = torch.cat([before_pad_tensor(train_data[u][idx]['history_loc'],max_history,0).unsqueeze(0) for u, idx in batch_queue], dim=0).to(device).long()
         history_time = torch.cat([before_pad_tensor(train_data[u][idx]['history_tim'],max_history,0).unsqueeze(0) for u, idx in batch_queue], dim=0).to(device).long()
 
@@ -154,7 +161,7 @@ def run(epoch, model, optimizer, device, train_data, train_traj_id, valid_data, 
         
     for epoch_i in range(1, epoch+1):
         
-        train_queue = generate_queue(train_traj_id,'random','train')
+        train_queue = generate_queue(train_traj_id,'normal','train')
         valid_queue = generate_queue(valid_traj_id,'normal','valid') 
 
         train_avg_loss = predict_train_epoch(epoch_i, model, train_data, train_queue, optimizer, device, batch_size)
@@ -183,7 +190,7 @@ def run(epoch, model, optimizer, device, train_data, train_traj_id, valid_data, 
             # writer.add_scalars("Lr", {"Train": optimizer._print_lr()}, epoch_i)
 
 
-def main(Epoch=200, Bert_Pretrain=False, Batch_size=8, Pretrained=False, log='predict'):
+def main(Epoch=300, Bert_Pretrain=False, Batch_size=8, Pretrained=False, log='predict'):
 
     head_n = 10
     d_model = 500
