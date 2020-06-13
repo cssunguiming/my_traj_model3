@@ -112,7 +112,9 @@ class Predict_Model(nn.Module):
         log_pos = F.logsigmoid(pos_dot).sum() #按照公式计算
         log_neg = F.logsigmoid(-neg_dot).sum()
 
-        loss = -(log_pos + log_neg) 
+        loss = (-(log_pos + log_neg)) / torch.sum(is_target)
+        # print(loss)
+        # exit()
           
         return loss
 
