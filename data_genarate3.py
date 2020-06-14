@@ -46,7 +46,7 @@ def neg_samp_pad_tensor(vec, pad, dim):
     return torch.cat([vec, torch.zeros(*pad_size, dtype=torch.long)], dim=dim)
 
 
-def generate_input_history(data_neural, mode, freqs, N=5, candidate=None):
+def generate_input_history(data_neural, mode, freqs, N=15, candidate=None):
     # train_data, train_traj_idx = generate_input_history(data_neural=dataset_4qs["data_neural"], mode="train")
     data_train = {}
     train_idx = {}
